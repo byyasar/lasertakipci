@@ -1,12 +1,13 @@
-from fpdf.fpdf import FPDF
-import math
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
 
-
+def mm(val):
+    return val * 2.83465  # 1 mm = 2.83465 point
 
 # Etiket verileri - Gruplandırılmış halde
 pin_labels = [
     # GND Etiketleri
-    
     ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
     ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
     ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
@@ -86,105 +87,79 @@ pin_labels = [
     
     # Sensör Pinleri
     ("CE", "CE"), ("CLK", "CLK"), ("TRIG", "Trigger"), ("ECHO", "Echo"),
-   ("CE", "CE"),
-   ("1", "1"), ("1", "1"), ("1", "1"), ("1", "1"), ("1", "1"), ("1", "1"),
+   ("CE", "CE"), ("1", "1"), ("2", "2"),("3", "3"), ("4", "4"), ("5", "5"), ("6", "6"), 
 ]
 
-class PDF(FPDF):
-    def rounded_rect(self, x, y, w, h, r, style=''):
-        '''Draw a rounded rectangle'''
-        k = self.k
-        hp = self.h
-        if style=='F':
-            op='f'
-        elif style=='FD' or style=='DF':
-            op='B'
-        else:
-            op='S'
-        # Scale by k for page units
-        myArc = 4/3 * (math.sqrt(2) - 1)
-        self._out('%.2F %.2F m' % ((x+r)*k,(hp-y)*k))
-        xc = x+w-r
-        yc = y+r
-        self._out('%.2F %.2F l' % (xc*k,(hp-y)*k))
-        self.curve(xc+r*myArc, y, xc+r, y+r*myArc, xc+r, y+r)
-        xc = x+w-r
-        yc = y+h-r
-        self._out('%.2F %.2F l' % ((x+w)*k,(hp-yc)*k))
-        self.curve(xc+r, yc+r*myArc, xc+r*myArc, yc+r, xc, yc+r)
-        xc = x+r
-        yc = y+h-r
-        self._out('%.2F %.2F l' % (xc*k,(hp-(y+h))*k))
-        self.curve(xc-r*myArc, yc+r, xc-r, yc+r*myArc, xc-r, yc)
-        xc = x+r
-        yc = y+r
-        self._out('%.2F %.2F l' % (x*k,(hp-yc)*k))
-        self.curve(xc-r, yc-r*myArc, xc-r*myArc, yc-r, xc, yc-r)
-        self._out(op)
-
-    def curve(self, x1, y1, x2, y2, x3, y3):
-        '''Draw a Bezier curve'''
-        k = self.k
-        hp = self.h
-        self._out('%.2F %.2F %.2F %.2F %.2F %.2F c' %
-            (x1*k, (hp-y1)*k,
-             x2*k, (hp-y2)*k,
-             x3*k, (hp-y3)*k))
-
-# PDF oluştur
-pdf = PDF(orientation='P', unit='mm', format='A4')
-pdf.add_page()
-
-# Font ekle
-pdf.add_font("RobotoMono", style="B", fname="Roboto-Regular.ttf", uni=True)
-pdf.set_font("RobotoMono", style="B", size=6)
-
-# Yerleşim ayarları
-cols = 6  # Yatay sayı
-rows = 30  # Dikey sayı
-margin_top = 15  # Üst kenar boşluğu (mm)
-margin_side = 5  # Yan kenar boşluğu (mm)
-margin_bottom = 13.5  # Alt kenar boşluğu (mm)
+# Sayfa ve etiket ayarları
+PAGE_WIDTH, PAGE_HEIGHT = A4
+cols = 6
+rows = 30
+margin_top = 15
+margin_bottom = 12
+margin_side = 5
 box_width = 30  # Etiket genişliği (mm)
 box_height = 9  # Etiket yüksekliği (mm)
 gap_horizontal = 4  # Yatay karakter sıklığı (mm)
-gap_vertical = 0  # Dikey karakter sıklığı (mm)
+usable_height = 297 - margin_top - margin_bottom
+if rows > 1:
+    gap_vertical = (usable_height - (rows * box_height)) / (rows - 1)
+else:
+    gap_vertical = 0
 
-# Kullanılabilir yükseklik hesaplama
-usable_height = 297 - margin_top - margin_bottom  # A4 yüksekliği - üst ve alt boşluklar
-# Dikey boşluk hesaplama
-total_vertical_gap = usable_height - (rows * box_height)  # Toplam dikey boşluk
-gap_vertical = total_vertical_gap / (rows - 1)  # Etiketler arası dikey boşluk
+c = canvas.Canvas("etiketler_v3.pdf", pagesize=A4)
 
-# Radius değeri (köşe yuvarlaklığı)
-radius = 2
-
-# Hücreleri çiz
 for idx, (pin, desc) in enumerate(pin_labels):
-    # Her sayfada rows * cols kadar etiket olacak (30 * 6 = 180)
-    if idx > 0 and idx % (rows * cols) == 0:
-        pdf.add_page()
-    
-    # Sayfa içindeki pozisyonu hesapla
-    idx_in_page = idx % (rows * cols)
-    col = idx_in_page % cols
-    row = idx_in_page // cols
-    
-    x = margin_side + col * (box_width + gap_horizontal)
-    y = margin_top + row * (box_height + gap_vertical)
+    if idx >= 180:  # 175'ten sonraki etiketleri atla
+        break
+    col = idx % cols
+    row = idx // cols
+    x = mm(margin_side + col * (box_width + gap_horizontal))
+    y = mm(297 - margin_top - (row + 1) * box_height - row * gap_vertical)
+    # Etiket grubuna göre arkaplan rengi
+    if 'GND' in pin or 'GND' in desc:
+        c.setFillColor(colors.Color(0, 0, 0, alpha=0.5))  # Siyah, yarı şeffaf
+    elif '5V' in pin or '5V' in desc:
+        c.setFillColor(colors.Color(1, 0, 0, alpha=0.5))  # Kırmızı, yarı şeffaf
+    elif '3.3V' in pin or '3.3V' in desc:
+        c.setFillColor(colors.Color(1, 0.5, 0, alpha=0.5))  # Turuncu, yarı şeffaf
+    elif 'SDA' in pin or 'SDA' in desc:  # I2C pinleri
+        c.setFillColor(colors.Color(0, 0, 1, alpha=0.5))  # Mavi, yarı şeffaf
+    elif 'SCL' in pin or 'SCL' in desc:  # I2C pinleri
+        c.setFillColor(colors.Color(0, 0, 1, alpha=0.5))  # Mavi, yarı şeffaf
+    elif 'MOSI' in pin or 'MOSI' in desc:  # SPI pinleri
+        c.setFillColor(colors.Color(0, 1, 0, alpha=0.5))  # Yeşil, yarı şeffaf
+    elif 'MISO' in pin or 'MISO' in desc:  # SPI pinleri
+        c.setFillColor(colors.Color(0, 1, 0, alpha=0.5))  # Yeşil, yarı şeffaf
+    elif 'SCK' in pin or 'SCK' in desc:  # SPI pinleri
+        c.setFillColor(colors.Color(0, 1, 0, alpha=0.5))  # Yeşil, yarı şeffaf
+    elif 'SS' in pin or 'SS' in desc:  # SPI pinleri
+        c.setFillColor(colors.Color(0, 1, 0, alpha=0.5))  # Yeşil, yarı şeffaf
+    else:
+        c.setFillColor(colors.Color(1, 1, 1, alpha=0.5))  # Beyaz, yarı şeffaf
+    c.setStrokeColor(colors.black)  # Dış çerçeve her zaman siyah
+    c.roundRect(x + mm(1), y + mm(1), mm(28), mm(7), mm(2), stroke=1, fill=1)
+    # Ortadaki dik çizgi
+    if 'GND' in pin or '5V' in pin:
+        c.setStrokeColor(colors.white)  # GND ve 5V için beyaz çizgi
+    else:
+        c.setStrokeColor(colors.black)  # Diğerleri için siyah çizgi
+    c.line(x + mm(15), y + mm(1), x + mm(15), y + mm(8))
+    # Pin ve açıklama (sola dayalı)
+    c.setFont("Helvetica-Bold", 6)
+    if 'GND' in pin or '5V' in pin:
+        c.setFillColor(colors.white)  # GND ve 5V için beyaz font
+    else:
+        c.setFillColor(colors.black)  # Diğerleri için siyah font
+    # Sol bölüm için metin genişliğini hesapla
+    left_text = f"{pin} - {desc}"
+    left_text_width = c.stringWidth(left_text, "Helvetica-Bold", 6)
+    left_center_x = x + mm(2) + (mm(14) - left_text_width) / 2
+    c.drawString(left_center_x, y + mm(box_height/2) - 1, left_text)
+    # Açıklama (sağa dayalı)
+    # Sağ bölüm için metin genişliğini hesapla
+    right_text = f"{pin} - {desc}"
+    right_text_width = c.stringWidth(right_text, "Helvetica-Bold", 6)
+    right_center_x = x + mm(15) + (mm(14) - right_text_width) / 2
+    c.drawString(right_center_x, y + mm(box_height/2) - 1, right_text)
 
-    # Etiket çerçevesi (8mm yükseklik)
-    inner_margin = 0.5  # İç kenar boşluğu (mm)
-    pdf.rounded_rect(x + inner_margin, y + inner_margin, box_width - (2 * inner_margin), 8, radius, style='D')
-
-    # Sıra numarasını yazdır
-    pdf.set_text_color(0, 0, 0)  # Siyah yazı
-    pdf.set_xy(x + 1, y + 3)  # y+3 ile dikeyde ortalama
-    pdf.cell(box_width - 2, 3, str(idx + 1), align='C')  # Sıra numarasını ortala
-
-    # Ortadan dikey çizgi
-    pdf.set_draw_color(0, 0, 0)  # Siyah çizgi
-    pdf.line(x + box_width / 2, y + inner_margin, x + box_width / 2, y + inner_margin + 8)
-
-# PDF dosyayı kaydet
-pdf.output("arduino_mega_etiketleri_radiuslu3.pdf")
+c.save() 
