@@ -27,6 +27,7 @@ pin_labels = [
     ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
     ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
     ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
+    ("3.3V", "Vdd"), ("3.3V", "Vdd"),
     
     # Diğer Güç ve Referans Pinleri
     ("VIN", "Vss"), ("IOREF", "IO Ref"), ("AREF", "ADC Ref"),
@@ -50,6 +51,8 @@ pin_labels = [
     ("18", "TX1/INT3"), ("19", "RX1/INT2"),
     
     # SPI Pinleri
+    ("50", "MISO"), ("51", "MOSI"), ("52", "SCK"), ("53", "SS"),
+    ("50", "MISO"), ("51", "MOSI"), ("52", "SCK"), ("53", "SS"),
     ("50", "MISO"), ("51", "MOSI"), ("52", "SCK"), ("53", "SS"),
     ("10", "PWM/SS"), ("11", "MOSI"), ("12", "MISO"), ("13", "SCK/LED"),
     
@@ -80,7 +83,6 @@ pin_labels = [
     ("49", "DIO"),
     
     # Sensör Pinleri
-    ("CE", "CE"), ("CLK", "CLK"), ("TRIG", "Trigger"), ("ECHO", "Echo"),
     ("CE", "CE"), ("CLK", "CLK"), ("TRIG", "Trigger"), ("ECHO", "Echo"),
     ("CE", "CE"), ("CLK", "CLK"),
     
@@ -138,7 +140,7 @@ pdf.set_font("RobotoMono", style="B", size=6)
 # Yerleşim ayarları
 cols = 6  # Yatay sayı
 rows = 30  # Dikey sayı
-margin_top = 13.5  # Üst kenar boşluğu (mm)
+margin_top = 15  # Üst kenar boşluğu (mm)
 margin_side = 5  # Yan kenar boşluğu (mm)
 box_width = 30  # Etiket genişliği (mm)
 box_height = 9  # Etiket yüksekliği (mm)
