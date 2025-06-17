@@ -9,12 +9,23 @@ pin_labels = [
     ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"), 
     ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
     ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
+    ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
+    ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
+    ("GND", "Ground"), ("GND", "Ground"), ("GND", "Ground"),
     # 5V Etiketleri
+    ("5V", "Vcc"), ("5V", "Vcc"), ("5V", "Vcc"),
+    ("5V", "Vcc"), ("5V", "Vcc"), ("5V", "Vcc"),
+    ("5V", "Vcc"), ("5V", "Vcc"), ("5V", "Vcc"),
     ("5V", "Vcc"), ("5V", "Vcc"), ("5V", "Vcc"),
     ("5V", "Vcc"), ("5V", "Vcc"), ("5V", "Vcc"),
     ("5V", "Vcc"), ("5V", "Vcc"), ("5V", "Vcc"),
 
     # 3.3V Etiketi
+    ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
+    ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
+    ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
+    ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
+    ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
     ("3.3V", "Vdd"), ("3.3V", "Vdd"), ("3.3V", "Vdd"),
     
     # Diğer Güç ve Referans Pinleri
@@ -40,9 +51,14 @@ pin_labels = [
     
     # SPI Pinleri
     ("50", "MISO"), ("51", "MOSI"), ("52", "SCK"), ("53", "SS"),
-    ("10", "PWM/SS"), ("11", "PWM/MOSI"), ("12", "MISO"), ("13", "SCK/LED"),
+    ("10", "PWM/SS"), ("11", "MOSI"), ("12", "MISO"), ("13", "SCK/LED"),
     
     # I2C Pinleri
+    ("20", "SDA/INT1"), ("21", "SCL/INT0"),
+    ("20", "SDA/INT1"), ("21", "SCL/INT0"),
+    ("20", "SDA/INT1"), ("21", "SCL/INT0"),
+    ("20", "SDA/INT1"), ("21", "SCL/INT0"),
+    ("20", "SDA/INT1"), ("21", "SCL/INT0"),
     ("20", "SDA/INT1"), ("21", "SCL/INT0"),
     
     # Dijital I/O Pinler
@@ -54,9 +70,20 @@ pin_labels = [
     ("38", "DIO"), ("39", "DIO"), ("40", "DIO"), ("41", "DIO"),
     ("42", "DIO"), ("43", "DIO"), ("47", "DIO"), ("48", "DIO"),
     ("49", "DIO"),
+    ("8", "DIO"),
+    ("22", "DIO"), ("23", "DIO"), ("24", "DIO"), ("25", "DIO"),
+    ("26", "DIO"), ("27", "DIO"), ("28", "DIO"), ("29", "DIO"),
+    ("30", "DIO"), ("31", "DIO"), ("32", "DIO"), ("33", "DIO"),
+    ("34", "DIO"), ("35", "DIO"), ("36", "DIO"), ("37", "DIO"),
+    ("38", "DIO"), ("39", "DIO"), ("40", "DIO"), ("41", "DIO"),
+    ("42", "DIO"), ("43", "DIO"), ("47", "DIO"), ("48", "DIO"),
+    ("49", "DIO"),
     
     # Sensör Pinleri
-    ("CE", "CE"), ("CLK", "CLK"), ("TRIG", "Trigger"), ("ECHO", "Echo")
+    ("CE", "CE"), ("CLK", "CLK"), ("TRIG", "Trigger"), ("ECHO", "Echo"),
+    ("CE", "CE"), ("CLK", "CLK"), ("TRIG", "Trigger"), ("ECHO", "Echo"),
+    ("CE", "CE"), ("CLK", "CLK"),
+    
 ]
 
 class PDF(FPDF):
@@ -106,17 +133,17 @@ pdf.add_page()
 
 # Font ekle
 pdf.add_font("RobotoMono", style="B", fname="Roboto-Regular.ttf", uni=True)
-pdf.set_font("RobotoMono", style="B", size=10)
+pdf.set_font("RobotoMono", style="B", size=6)
 
 # Yerleşim ayarları
-cols = 3
-rows = 35
-margin = 5
-gap = 1  # mm boşluk
-usable_width = 210 - 2 * margin - (cols - 1) * gap
-usable_height = 297 - 2 * margin - (rows - 1) * gap
-box_width = usable_width / cols
-box_height = usable_height / rows
+cols = 6  # Yatay sayı
+rows = 30  # Dikey sayı
+margin_top = 13.5  # Üst kenar boşluğu (mm)
+margin_side = 5  # Yan kenar boşluğu (mm)
+box_width = 30  # Etiket genişliği (mm)
+box_height = 9  # Etiket yüksekliği (mm)
+gap_horizontal = 34  # Yatay karakter sıklığı (mm)
+gap_vertical = 9  # Dikey karakter sıklığı (mm)
 
 # Radius değeri (köşe yuvarlaklığı)
 radius = 2
@@ -128,8 +155,8 @@ for idx, (pin, desc) in enumerate(pin_labels):
     if row >= rows:
         break
 
-    x = margin + col * (box_width + gap)
-    y = margin + row * (box_height + gap)
+    x = margin_side + col * gap_horizontal
+    y = margin_top + row * gap_vertical
 
     # Etiket tipine göre renklendirme
     if pin == "GND":
@@ -162,12 +189,12 @@ for idx, (pin, desc) in enumerate(pin_labels):
     pdf.line(x + box_width / 2, y, x + box_width / 2, y + box_height)
 
     # Sol taraf yazı
-    pdf.set_xy(x + 1, y + 2)
-    pdf.cell((box_width / 2) - 2, 4, f"{pin} : {desc}", align='L')
+    pdf.set_xy(x + 1, y + 3)  # y+3 ile dikeyde ortalama
+    pdf.cell((box_width / 2) - 2, 3, f"{pin}:{desc}", align='L')
 
     # Sağ taraf yazı
-    pdf.set_xy(x + box_width / 2 + 1, y + 2)
-    pdf.cell((box_width / 2) - 2, 4, f"{desc} : {pin}", align='R')
+    pdf.set_xy(x + box_width / 2 + 1, y + 3)  # y+3 ile dikeyde ortalama
+    pdf.cell((box_width / 2) - 2, 3, f"{desc}:{pin}", align='R')
 
     # Çizgi rengini siyaha geri döndür
     pdf.set_draw_color(0, 0, 0)
